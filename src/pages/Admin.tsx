@@ -12,6 +12,8 @@ interface AccessCode {
   created_at: string;
   expires_at: string;
   used_at: string | null;
+  max_uses?: number;
+  use_count?: number;
 }
 
 const ADMIN_PASSWORD = "PERCY";
@@ -21,7 +23,8 @@ const Admin = () => {
   const [password, setPassword] = useState("");
   const [codes, setCodes] = useState<AccessCode[]>([]);
   const [newCode, setNewCode] = useState("");
-  const [validityHours, setValidityHours] = useState("24");
+  const [validityHours, setValidityHours] = useState("5");
+  const [maxUses, setMaxUses] = useState("1");
   const [loading, setLoading] = useState(false);
 
   const fetchCodes = async () => {
@@ -69,12 +72,14 @@ const Admin = () => {
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + parseInt(validityHours));
 
-    const { error } = await supabase
+    const { error } = await (supabase
       .from("access_codes")
       .insert({
         code: newCode.toUpperCase(),
         expires_at: expiresAt.toISOString(),
-      });
+        max_uses: parseInt(maxUses) || 1,
+        use_count: 0,
+      } as any));
 
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
@@ -192,15 +197,30 @@ const Admin = () => {
             </Button>
           </div>
 
-          <div className="flex gap-2 items-center">
-            <span className="text-sm text-muted-foreground">Validade:</span>
-            <Input
-              type="number"
-              value={validityHours}
-              onChange={(e) => setValidityHours(e.target.value)}
-              className="w-20 h-10 text-center bg-secondary border-border"
-            />
-            <span className="text-sm text-muted-foreground">horas</span>
+          <div className="flex gap-4 flex-wrap">
+            <div className="flex gap-2 items-center">
+              <span className="text-sm text-muted-foreground">Validade:</span>
+              <Input
+                type="number"
+                value={validityHours}
+                onChange={(e) => setValidityHours(e.target.value)}
+                className="w-20 h-10 text-center bg-secondary border-border"
+                min="1"
+              />
+              <span className="text-sm text-muted-foreground">horas</span>
+            </div>
+            
+            <div className="flex gap-2 items-center">
+              <span className="text-sm text-muted-foreground">Máx. usos:</span>
+              <Input
+                type="number"
+                value={maxUses}
+                onChange={(e) => setMaxUses(e.target.value)}
+                className="w-20 h-10 text-center bg-secondary border-border"
+                min="1"
+              />
+              <span className="text-sm text-muted-foreground">vezes</span>
+            </div>
           </div>
 
           <Button
@@ -221,43 +241,51 @@ const Admin = () => {
             {codes.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">Nenhum código criado</p>
             ) : (
-              codes.map((item) => (
-                <div key={item.id} className="py-3 flex items-center justify-between gap-2">
-                  <div className="flex-1 min-w-0">
+              codes.map((item) => {
+                const maxUses = item.max_uses ?? 1;
+                const useCount = item.use_count ?? 0;
+                const isFullyUsed = useCount >= maxUses;
+                
+                return (
+                  <div key={item.id} className="py-3 flex items-center justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-foreground">{item.code}</span>
+                        <button onClick={() => copyToClipboard(item.code)} className="text-muted-foreground hover:text-primary">
+                          <Copy className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <div className="text-xs text-muted-foreground space-x-2">
+                        <span>Expira: {formatDate(item.expires_at)}</span>
+                        <span>•</span>
+                        <span>Usos: {useCount}/{maxUses}</span>
+                      </div>
+                    </div>
                     <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold text-foreground">{item.code}</span>
-                      <button onClick={() => copyToClipboard(item.code)} className="text-muted-foreground hover:text-primary">
-                        <Copy className="w-4 h-4" />
+                      {isFullyUsed ? (
+                        <span className="text-xs px-2 py-1 rounded-full bg-yellow-500/20 text-yellow-400">Esgotado</span>
+                      ) : isExpired(item.expires_at) ? (
+                        <span className="text-xs px-2 py-1 rounded-full bg-red-500/20 text-red-400">Expirado</span>
+                      ) : (
+                        <span className="text-xs px-2 py-1 rounded-full bg-primary/20 text-primary">Ativo</span>
+                      )}
+                      <button
+                        onClick={() => handleDeleteCode(item.id)}
+                        className="text-muted-foreground hover:text-red-400 p-1"
+                      >
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      Expira: {formatDate(item.expires_at)}
-                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {item.is_used ? (
-                      <span className="text-xs px-2 py-1 rounded-full bg-yellow-500/20 text-yellow-400">Usado</span>
-                    ) : isExpired(item.expires_at) ? (
-                      <span className="text-xs px-2 py-1 rounded-full bg-red-500/20 text-red-400">Expirado</span>
-                    ) : (
-                      <span className="text-xs px-2 py-1 rounded-full bg-primary/20 text-primary">Ativo</span>
-                    )}
-                    <button
-                      onClick={() => handleDeleteCode(item.id)}
-                      className="text-muted-foreground hover:text-red-400 p-1"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
 
         <footer className="py-4 text-center space-y-1">
           <p className="text-xs text-muted-foreground/50">
-            Acesso válido por 24 horas após ativação
+            Acesso válido por 5 horas após ativação
           </p>
           <p className="text-xs text-muted-foreground/50">
             © 2024 Futebol ao Vivo • Todos os direitos reservados
