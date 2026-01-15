@@ -5,23 +5,23 @@ const HowItWorks = () => {
   const steps = [
     {
       icon: <MessageCircle className="w-5 h-5" />,
-      title: "Envie via WhatsApp",
-      description: "Clique no botão e envie '10MT' para nosso número",
+      title: "ENVIE VIA WHATSAPP",
+      description: "CLIQUE NO BOTÃO E ENVIE '10MT' PARA NOSSO NÚMERO",
     },
     {
       icon: <CreditCard className="w-5 h-5" />,
-      title: "Faça o Pagamento",
-      description: "PAGUE 10MT VIA M-PESA OU TRANSFERENCIA",
+      title: "FAÇA O PAGAMENTO",
+      description: "PAGUE 10MT VIA M-PESA OU TRANSFERÊNCIA",
     },
     {
       icon: <Key className="w-5 h-5" />,
-      title: "Receba seu Código",
-      description: "APOS CONFIRMACAO, ENVIAMOS SEU CODIGO DE ACESSO",
+      title: "RECEBA SEU CÓDIGO",
+      description: "APÓS CONFIRMAÇÃO, ENVIAMOS SEU CÓDIGO DE ACESSO",
     },
     {
       icon: <Play className="w-5 h-5" />,
-      title: "Assista aos Jogos",
-      description: "Acesso total por 5 horas ao futebol ao vivo",
+      title: "ASSISTA AOS JOGOS",
+      description: "ACESSO TOTAL POR 5 HORAS AO FUTEBOL AO VIVO",
     },
   ];
 
