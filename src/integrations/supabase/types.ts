@@ -14,32 +14,183 @@ export type Database = {
   }
   public: {
     Tables: {
-      access_codes: {
+      conversations: {
         Row: {
-          code: string
           created_at: string
-          expires_at: string
           id: string
-          is_used: boolean
-          used_at: string | null
+          title: string
+          updated_at: string
+          user_id: string
         }
         Insert: {
-          code: string
           created_at?: string
-          expires_at: string
           id?: string
-          is_used?: boolean
-          used_at?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
         }
         Update: {
-          code?: string
           created_at?: string
-          expires_at?: string
           id?: string
-          is_used?: boolean
-          used_at?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
+      }
+      game_history: {
+        Row: {
+          created_at: string
+          game_seed: string
+          id: string
+          multiplier: number
+        }
+        Insert: {
+          created_at?: string
+          game_seed: string
+          id?: string
+          multiplier: number
+        }
+        Update: {
+          created_at?: string
+          game_seed?: string
+          id?: string
+          multiplier?: number
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          role: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          role: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          balance: number
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          balance?: number
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          balance?: number
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      signals: {
+        Row: {
+          confidence: string
+          created_at: string
+          entry_multiplier: number
+          id: string
+          reasoning: string | null
+          result: string | null
+          user_id: string | null
+        }
+        Insert: {
+          confidence: string
+          created_at?: string
+          entry_multiplier: number
+          id?: string
+          reasoning?: string | null
+          result?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          confidence?: string
+          created_at?: string
+          entry_multiplier?: number
+          id?: string
+          reasoning?: string | null
+          result?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_bets: {
+        Row: {
+          bet_amount: number
+          cashout_multiplier: number | null
+          created_at: string
+          game_id: string
+          id: string
+          profit: number | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          bet_amount: number
+          cashout_multiplier?: number | null
+          created_at?: string
+          game_id: string
+          id?: string
+          profit?: number | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          bet_amount?: number
+          cashout_multiplier?: number | null
+          created_at?: string
+          game_id?: string
+          id?: string
+          profit?: number | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_bets_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "game_history"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
