@@ -29,7 +29,7 @@ const Admin = () => {
 
   const fetchCodes = async () => {
     const { data, error } = await supabase
-      .from("access_codes")
+      .from("access_codes" as any)
       .select("*")
       .order("created_at", { ascending: false });
     
@@ -37,7 +37,7 @@ const Admin = () => {
       toast({ title: "Erro", description: "Falha ao carregar códigos", variant: "destructive" });
       return;
     }
-    setCodes(data || []);
+    setCodes((data as unknown as AccessCode[]) || []);
   };
 
   useEffect(() => {
@@ -72,14 +72,14 @@ const Admin = () => {
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + parseInt(validityHours));
 
-    const { error } = await (supabase
-      .from("access_codes")
+    const { error } = await supabase
+      .from("access_codes" as any)
       .insert({
         code: newCode.toUpperCase(),
         expires_at: expiresAt.toISOString(),
         max_uses: parseInt(maxUses) || 1,
         use_count: 0,
-      } as any));
+      } as any);
 
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
@@ -93,7 +93,7 @@ const Admin = () => {
 
   const handleDeleteCode = async (id: string) => {
     const { error } = await supabase
-      .from("access_codes")
+      .from("access_codes" as any)
       .delete()
       .eq("id", id);
 

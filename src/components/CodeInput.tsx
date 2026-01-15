@@ -5,6 +5,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
+interface AccessCode {
+  id: string;
+  code: string;
+  is_used: boolean;
+  expires_at: string;
+  used_at: string | null;
+  max_uses: number;
+  use_count: number;
+}
+
 const CodeInput = () => {
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -15,19 +25,21 @@ const CodeInput = () => {
     setLoading(true);
     
     const { data, error } = await supabase
-      .from("access_codes")
+      .from("access_codes" as any)
       .select("*")
       .eq("code", code.toUpperCase())
       .single();
 
-    if (error || !data) {
+    const accessCode = data as unknown as AccessCode | null;
+
+    if (error || !accessCode) {
       toast({ title: "Código inválido", description: "Verifique e tente novamente", variant: "destructive" });
       setLoading(false);
       return;
     }
 
     const now = new Date();
-    const expiresAt = new Date(data.expires_at);
+    const expiresAt = new Date(accessCode.expires_at);
 
     if (expiresAt < now) {
       toast({ title: "Código expirado", description: "Este código já não é válido", variant: "destructive" });
@@ -35,17 +47,24 @@ const CodeInput = () => {
       return;
     }
 
-    if (data.is_used) {
-      toast({ title: "Código já usado", description: "Este código já foi utilizado", variant: "destructive" });
+    // Check usage limit
+    const maxUses = accessCode.max_uses ?? 1;
+    const useCount = accessCode.use_count ?? 0;
+    
+    if (useCount >= maxUses) {
+      toast({ title: "Código esgotado", description: "Este código já atingiu o limite de usos", variant: "destructive" });
       setLoading(false);
       return;
     }
 
-    // Mark code as used
+    // Increment use count
     await supabase
-      .from("access_codes")
-      .update({ is_used: true, used_at: now.toISOString() })
-      .eq("id", data.id);
+      .from("access_codes" as any)
+      .update({ 
+        use_count: useCount + 1,
+        used_at: now.toISOString() 
+      } as any)
+      .eq("id", accessCode.id);
 
     toast({ title: "Sucesso!", description: "Redirecionando..." });
     
