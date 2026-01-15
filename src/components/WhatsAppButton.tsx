@@ -2,8 +2,16 @@ import { MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const WhatsAppButton = () => {
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) return "Bom dia";
+    if (hour >= 12 && hour < 18) return "Boa tarde";
+    return "Boa noite";
+  };
+
   const handleClick = () => {
-    window.open("https://wa.me/258850272166?text=10MT", "_blank");
+    const message = encodeURIComponent(`${getGreeting()}! Gostaria de Pagar 10 MT JOGO ON-LINE`);
+    window.open(`https://wa.me/258850272166?text=${message}`, "_blank");
   };
 
   return (
