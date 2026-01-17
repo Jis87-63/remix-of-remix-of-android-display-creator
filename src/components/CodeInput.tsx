@@ -13,7 +13,7 @@ interface AccessCode {
   used_at: string | null;
 }
 
-const STREAM_URL = "https://loco.com/streamers/futebol.online?lang=pt-br";
+const STREAM_URL = "https://www.camel1.live/f/home";
 
 const CodeInput = () => {
   const [code, setCode] = useState("");
