@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,13 +11,37 @@ interface AccessCode {
   is_used: boolean;
   expires_at: string;
   used_at: string | null;
-  max_uses: number;
-  use_count: number;
 }
+
+const STREAM_URL = "https://loco.com/streamers/futebol.online?lang=pt-br";
 
 const CodeInput = () => {
   const [code, setCode] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Check for saved valid code on mount
+  useEffect(() => {
+    const checkSavedCode = async () => {
+      const savedCode = localStorage.getItem("access_code");
+      const savedExpiry = localStorage.getItem("access_code_expiry");
+
+      if (savedCode && savedExpiry) {
+        const expiryDate = new Date(savedExpiry);
+        if (expiryDate > new Date()) {
+          // Code still valid, redirect
+          window.location.href = STREAM_URL;
+          return;
+        } else {
+          // Code expired, clear storage
+          localStorage.removeItem("access_code");
+          localStorage.removeItem("access_code_expiry");
+        }
+      }
+      setLoading(false);
+    };
+
+    checkSavedCode();
+  }, []);
 
   const handleSubmit = async () => {
     if (!code.trim()) return;
@@ -28,7 +52,7 @@ const CodeInput = () => {
       .from("access_codes" as any)
       .select("*")
       .eq("code", code.toUpperCase())
-      .single();
+      .maybeSingle();
 
     const accessCode = data as unknown as AccessCode | null;
 
@@ -47,30 +71,23 @@ const CodeInput = () => {
       return;
     }
 
-    // Check usage limit
-    const maxUses = accessCode.max_uses ?? 1;
-    const useCount = accessCode.use_count ?? 0;
-    
-    if (useCount >= maxUses) {
-      toast({ title: "Código esgotado", description: "Este código já atingiu o limite de usos", variant: "destructive" });
-      setLoading(false);
-      return;
-    }
-
-    // Increment use count
-    await supabase
-      .from("access_codes" as any)
-      .update({ 
-        use_count: useCount + 1,
-        used_at: now.toISOString() 
-      } as any)
-      .eq("id", accessCode.id);
+    // Save code and expiry to localStorage
+    localStorage.setItem("access_code", accessCode.code);
+    localStorage.setItem("access_code_expiry", accessCode.expires_at);
 
     toast({ title: "Sucesso!", description: "Redirecionando..." });
     
     // Redirect to stream
-    window.location.href = "https://loco.com/streamers/futebol.online?lang=pt-br";
+    window.location.href = STREAM_URL;
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-6">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3 no-select">
