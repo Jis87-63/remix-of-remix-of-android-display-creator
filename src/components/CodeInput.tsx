@@ -19,23 +19,33 @@ const CodeInput = () => {
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // Check for saved valid code on mount
+  // Check for saved valid code on mount - verify in database
   useEffect(() => {
     const checkSavedCode = async () => {
       const savedCode = localStorage.getItem("access_code");
-      const savedExpiry = localStorage.getItem("access_code_expiry");
 
-      if (savedCode && savedExpiry) {
-        const expiryDate = new Date(savedExpiry);
-        if (expiryDate > new Date()) {
-          // Code still valid, redirect
-          window.location.href = STREAM_URL;
-          return;
-        } else {
-          // Code expired, clear storage
-          localStorage.removeItem("access_code");
-          localStorage.removeItem("access_code_expiry");
+      if (savedCode) {
+        // Verify code exists in database and is not expired
+        const { data, error } = await supabase
+          .from("access_codes" as any)
+          .select("*")
+          .eq("code", savedCode)
+          .maybeSingle();
+
+        const accessCode = data as unknown as AccessCode | null;
+
+        if (!error && accessCode) {
+          const expiresAt = new Date(accessCode.expires_at);
+          if (expiresAt > new Date()) {
+            // Code exists and still valid, redirect
+            window.location.href = STREAM_URL;
+            return;
+          }
         }
+        
+        // Code doesn't exist, expired, or error - clear storage
+        localStorage.removeItem("access_code");
+        localStorage.removeItem("access_code_expiry");
       }
       setLoading(false);
     };
