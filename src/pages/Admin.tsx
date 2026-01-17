@@ -70,14 +70,20 @@ const Admin = () => {
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + parseInt(validityHours));
 
-    const { error } = await supabase
+    console.log("Creating code:", { code: newCode.toUpperCase(), expires_at: expiresAt.toISOString() });
+    
+    const { data, error } = await supabase
       .from("access_codes" as any)
       .insert({
         code: newCode.toUpperCase(),
         expires_at: expiresAt.toISOString(),
-      } as any);
+      } as any)
+      .select();
+
+    console.log("Insert result:", { data, error });
 
     if (error) {
+      console.error("Insert error:", error);
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Sucesso", description: "Código criado!" });
